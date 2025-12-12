@@ -10,7 +10,7 @@ import (
 )
 
 type State struct {
-	Pods  []api.Pod  `json:"pods"`
+	Pods  []api.Pod  `json:"nodes"`
 	Nodes []api.Node `json:"nodes"`
 }
 
@@ -66,17 +66,17 @@ func (s *Store) save() error {
 	return os.WriteFile(s.filepath, data, 0644)
 }
 
-func (s *Store) CreatePod(pod api.Pod) error {
+func (s *Store) CreatePod(node api.Pod) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	for _, p := range s.state.Pods {
-		if p.Name == pod.Name && p.Namespace == pod.Namespace {
-			return fmt.Errorf("pod %s/%s already exists", pod.Namespace, pod.Name)
+		if p.Name == node.Name && p.Namespace == node.Namespace {
+			return fmt.Errorf("node %s/%s already exists", node.Namespace, node.Name)
 		}
 	}
 
-	s.state.Pods = append(s.state.Pods, pod)
+	s.state.Pods = append(s.state.Pods, node)
 	return s.save()
 }
 
@@ -84,51 +84,93 @@ func (s *Store) GetPod(namespace, name string) (*api.Pod, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	for _, pod := range s.state.Pods {
-		if pod.Name == name && pod.Namespace == namespace {
-			podCopy := pod
-			return &podCopy, nil
+	for _, node := range s.state.Pods {
+		if node.Name == name && node.Namespace == namespace {
+			nodeCopy := node
+			return &nodeCopy, nil
 		}
 	}
 
-	return nil, fmt.Errorf("pod %s/%s not found!", namespace, name)
+	return nil, fmt.Errorf("node %s/%s not found!", namespace, name)
 }
 
 func (s *Store) ListPods() ([]api.Pod, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	pods := make([]api.Pod, len(s.state.Pods))
-	copy(pods, s.state.Pods)
-	return pods, nil
+	nodes := make([]api.Pod, len(s.state.Pods))
+	copy(nodes, s.state.Pods)
+	return nodes, nil
 }
 
-func (s *Store) UpdatePod(pod api.Pod) error {
+func (s *Store) UpdatePod(node api.Pod) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	for i, p := range s.state.Pods {
-		if p.Name == pod.Name && p.Namespace == pod.Namespace {
-			s.state.Pods[i] = pod
+		if p.Name == node.Name && p.Namespace == node.Namespace {
+			s.state.Pods[i] = node
 			return s.save()
 		}
 	}
 
-	return fmt.Errorf("pod %s/%s not found!", pod.Namespace, pod.Name)
+	return fmt.Errorf("node %s/%s not found!", node.Namespace, node.Name)
 }
 
 func (s *Store) DeletePod(namespace, name string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	for i, pod := range s.state.Pods {
-		if pod.Name == name && pod.Namespace == namespace {
+	for i, node := range s.state.Pods {
+		if node.Name == name && node.Namespace == namespace {
 			s.state.Pods = append(s.state.Pods[:i], s.state.Pods[i+1:]...)
 			return s.save()
 		}
 	}
 
-	return fmt.Errorf("pod %s/%s not found!", namespace, name)
+	return fmt.Errorf("node %s/%s not found!", namespace, name)
+}
 
-	// add node methods later on (CreateNote, GetNode, ListNodes...)
+// add node methods later on (CreateNode, GetNode, ListNodes...)
+
+func (s *Store) CreateNode(node api.Node) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for _, n := range s.state.Nodes {
+		if n.Name == node.Name {
+			return fmt.Errorf("node %s already exists", node.Name)
+		}
+	}
+
+	s.state.Nodes = append(s.state.Nodes, node)
+	return s.save()
+}
+
+func (s *Store) GetNode(name string) (*api.Node, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	for _, node := range s.state.Nodes {
+		if node.Name == name {
+			nodeCopy := node
+			return &nodeCopy, nil
+		}
+	}
+
+	return nil, fmt.Errorf("node %s not found!", name)
+}
+
+func (s *Store) ListNodes(node api.Node) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for i, n := range s.state.Nodes {
+		if n.Name == node.Name {
+			s.state.Nodes[i] = node
+			return s.save()
+		}
+	}
+
+	return fmt.Errorf("node %s not found!", node.Name)
 }
