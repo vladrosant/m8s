@@ -10,7 +10,7 @@ import (
 )
 
 type State struct {
-	Pods  []api.Pod  `json:"nodes"`
+	Pods  []api.Pod  `json:"pods"`
 	Nodes []api.Node `json:"nodes"`
 }
 
