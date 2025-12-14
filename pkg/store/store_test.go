@@ -59,7 +59,7 @@ func TestStore(t *testing.T) {
 		t.Errorf("expected status 'Running', got '%s'", retrieved.Status)
 	}
 
-	err = store.DeletePod("default", "teset-pod")
+	err = store.DeletePod("default", "test-pod")
 	if err != nil {
 		t.Errorf("failed to delete pod: %v", err)
 	}

@@ -29,12 +29,12 @@ func NewStore(filepath string) (*Store, error) {
 		},
 	}
 
-	if err := s.load(); err != nil {
+	if err := s.Load(); err != nil {
 		if !os.IsNotExist(err) {
 			return nil, fmt.Errorf("failed to load state: %w", err)
 		}
 
-		if err := s.save(); err != nil {
+		if err := s.Save(); err != nil {
 			return nil, fmt.Errorf("failed to create state file: %w", err)
 		}
 	}
@@ -48,22 +48,28 @@ func (s *Store) load() error {
 		return err
 	}
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	return json.Unmarshal(data, &s.state)
 }
 
-func (s *Store) save() error {
-	s.mu.RLock()
-	data, err := json.MarshalIndent(s.state, "", "	")
-	s.mu.RUnlock()
+func (s *Store) Load() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.load()
+}
 
+func (s *Store) save() error {
+	data, err := json.MarshalIndent(s.state, "", "	")
 	if err != nil {
 		return err
 	}
 
 	return os.WriteFile(s.filepath, data, 0644)
+}
+
+func (s *Store) Save() error {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.save()
 }
 
 func (s *Store) CreatePod(node api.Pod) error {
