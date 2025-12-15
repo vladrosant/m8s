@@ -6,12 +6,12 @@ import (
 	"os"
 	"sync"
 
-	"github.com/vladrosant/m8s/pkg/api"
+	"github.com/vladrosant/m8s/pkg/types"
 )
 
 type State struct {
-	Pods  []api.Pod  `json:"pods"`
-	Nodes []api.Node `json:"nodes"`
+	Pods  []types.Pod  `json:"pods"`
+	Nodes []types.Node `json:"nodes"`
 }
 
 type Store struct {
@@ -24,8 +24,8 @@ func NewStore(filepath string) (*Store, error) {
 	s := &Store{
 		filepath: filepath,
 		state: State{
-			Pods:  []api.Pod{},
-			Nodes: []api.Node{},
+			Pods:  []types.Pod{},
+			Nodes: []types.Node{},
 		},
 	}
 
@@ -72,7 +72,7 @@ func (s *Store) Save() error {
 	return s.save()
 }
 
-func (s *Store) CreatePod(node api.Pod) error {
+func (s *Store) CreatePod(node types.Pod) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -86,7 +86,7 @@ func (s *Store) CreatePod(node api.Pod) error {
 	return s.save()
 }
 
-func (s *Store) GetPod(namespace, name string) (*api.Pod, error) {
+func (s *Store) GetPod(namespace, name string) (*types.Pod, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -100,16 +100,16 @@ func (s *Store) GetPod(namespace, name string) (*api.Pod, error) {
 	return nil, fmt.Errorf("node %s/%s not found!", namespace, name)
 }
 
-func (s *Store) ListPods() ([]api.Pod, error) {
+func (s *Store) ListPods() ([]types.Pod, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	nodes := make([]api.Pod, len(s.state.Pods))
+	nodes := make([]types.Pod, len(s.state.Pods))
 	copy(nodes, s.state.Pods)
 	return nodes, nil
 }
 
-func (s *Store) UpdatePod(node api.Pod) error {
+func (s *Store) UpdatePod(node types.Pod) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -139,7 +139,7 @@ func (s *Store) DeletePod(namespace, name string) error {
 
 // add node methods later on (CreateNode, GetNode, ListNodes...)
 
-func (s *Store) CreateNode(node api.Node) error {
+func (s *Store) CreateNode(node types.Node) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -153,7 +153,7 @@ func (s *Store) CreateNode(node api.Node) error {
 	return s.save()
 }
 
-func (s *Store) GetNode(name string) (*api.Node, error) {
+func (s *Store) GetNode(name string) (*types.Node, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -167,7 +167,7 @@ func (s *Store) GetNode(name string) (*api.Node, error) {
 	return nil, fmt.Errorf("node %s not found!", name)
 }
 
-func (s *Store) ListNodes(node api.Node) error {
+func (s *Store) ListNodes(node types.Node) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
