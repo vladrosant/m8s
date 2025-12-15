@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vladrosant/m8s/pkg/api"
+	"github.com/vladrosant/m8s/pkg/types"
 )
 
 func TestStore(t *testing.T) {
@@ -17,11 +17,11 @@ func TestStore(t *testing.T) {
 		t.Fatalf("failed to create store: %v", err)
 	}
 
-	pod := api.Pod{
+	pod := types.Pod{
 		Name:      "test-pod",
 		Namespace: "default",
 		Image:     "nginx.latest",
-		Status:    api.PodStatusPending,
+		Status:    types.PodStatusPending,
 		CreatedAt: time.Now(),
 	}
 
@@ -48,14 +48,14 @@ func TestStore(t *testing.T) {
 		t.Errorf("expected 1 pod, got %d", len(pods))
 	}
 
-	pod.Status = api.PodStatusRunning
+	pod.Status = types.PodStatusRunning
 	err = store.UpdatePod(pod)
 	if err != nil {
 		t.Fatalf("failed to update pod: %v", err)
 	}
 
 	retrieved, _ = store.GetPod("default", "test-pod")
-	if retrieved.Status != api.PodStatusRunning {
+	if retrieved.Status != types.PodStatusRunning {
 		t.Errorf("expected status 'Running', got '%s'", retrieved.Status)
 	}
 
