@@ -3,6 +3,7 @@ package kubelet
 import (
 	"fmt"
 	"os/exec"
+	"strings"
 
 	"github.com/vladrosant/m8s/pkg/types"
 )
@@ -81,7 +82,51 @@ func (cr *ContainerRuntime) GetContainerStatus(pod types.Pod) (string, error) {
 		return types.PodStatusPending, nil
 	}
 
-	running, err
+	running, err := cr.isContainerRunning(containerName)
+	if err != nil {
+		return types.PodStatusFailed, err
+	}
+
+	if running {
+		return types.PodStatusRunning, nil
+	}
+
+	exited, err := cr.hasContainerExited(containerName)
+	if err != nil {
+		return types.PodStatusFailed, err
+	}
+
+	if exited {
+		return types.PodStatusSucceeded, nil
+	}
 
 	return types.PodStatusFailed, nil
+}
+
+func (cr *ContainerRuntime) containerExists(name string) (bool, error) {
+	cmd := exec.Command("docker", "ps", "a","--filter", fmt.Sprintf("name=^%s$", name), "format", "{{.Names}}")
+	output, err := cmd.Output()
+	if err != nil {
+		return false, err
+	}
+
+	return strings.TrimSpace(string(output)) == name, nil
+}
+
+func (cr *ContainerRuntime) isContainerRunning(name string) (bool, error) {
+	cmd := exec.Command("docker", "ps", "--filter", fmt.Sprintf("name=^%s$", name), "format", "{{.Names}}")
+	output, err := cmd.Output()
+	if err != nil {
+		return false, err
+	}
+
+	return strings.TrimSpace(string(output)) == name, nil
+}
+
+func (cr *ContainerRuntime) hasContainerExited(name string) (bool, error) {
+	cmd := exec.Command("docker", "inspect", "--format", "{{.State.ExitCode}}", name")
+	output, err := cmd.Output()
+	if err != nil {
+		return false, err
+	}
 }
