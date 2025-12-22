@@ -124,9 +124,36 @@ func (cr *ContainerRuntime) isContainerRunning(name string) (bool, error) {
 }
 
 func (cr *ContainerRuntime) hasContainerExited(name string) (bool, error) {
-	cmd := exec.Command("docker", "inspect", "--format", "{{.State.ExitCode}}", name")
+	cmd := exec.Command("docker", "inspect", "--format", "{{.State.ExitCode}}", name)
 	output, err := cmd.Output()
 	if err != nil {
 		return false, err
 	}
+
+	exitCode := string.TrimSpace(string(Output))
+	return exitCode == "0", nil
+}
+
+func (cr *ContainerRuntime) startExistingContainer(name string) error {
+	cmd := exec.Command("docker", "start", name)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to start existing container: %w, output: %s", err, output)
+	}
+	return nil
+}
+
+func (cr *ContainerRuntime) ListRunningContainers() ([]string, error) {
+	cmd := exec.Command("docker", "ps", "--filter", "name=m8s-", "--format", "{{.Names}}")
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	if len(lines) == 1 && lines[0] == "" {
+		return []string{}, nil
+	}
+
+	return lines, nil
 }
