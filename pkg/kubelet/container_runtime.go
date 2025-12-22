@@ -104,7 +104,7 @@ func (cr *ContainerRuntime) GetContainerStatus(pod types.Pod) (string, error) {
 }
 
 func (cr *ContainerRuntime) containerExists(name string) (bool, error) {
-	cmd := exec.Command("docker", "ps", "a","--filter", fmt.Sprintf("name=^%s$", name), "format", "{{.Names}}")
+	cmd := exec.Command("docker", "ps", "a", "--filter", fmt.Sprintf("name=^%s$", name), "format", "{{.Names}}")
 	output, err := cmd.Output()
 	if err != nil {
 		return false, err
@@ -130,7 +130,7 @@ func (cr *ContainerRuntime) hasContainerExited(name string) (bool, error) {
 		return false, err
 	}
 
-	exitCode := string.TrimSpace(string(Output))
+	exitCode := strings.TrimSpace(string(output))
 	return exitCode == "0", nil
 }
 

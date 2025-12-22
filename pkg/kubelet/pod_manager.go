@@ -12,15 +12,15 @@ import (
 
 type PodManager struct {
 	nodeName string
-	apiURL string
-	runtime *ContainerRuntime
+	apiURL   string
+	runtime  *ContainerRuntime
 }
 
 func NewPodManager(nodeName, apiURL string) *PodManager {
 	return &PodManager{
 		nodeName: nodeName,
-		apiURL: apiURL,
-		runtime: NewContainerRuntime(),
+		apiURL:   apiURL,
+		runtime:  NewContainerRuntime(),
 	}
 }
 
@@ -34,7 +34,7 @@ func (pm *PodManager) Sync() error {
 	if err != nil {
 		return fmt.Errorf("failed to list running containers: %w", err)
 	}
-	
+
 	for _, pod := range desiredPods {
 		if pod.NodeName != pm.nodeName {
 			continue
@@ -79,19 +79,46 @@ func (pm *PodManager) Sync() error {
 	}
 
 	for _, containerName := range runningContainers {
-		if !desiredContainers[containerName]
+		if !desiredContainers[containerName] {
 			fmt.Printf("Stopping unexpected container %s...\n", containerName)
 
 			parts := strings.Split(containerName, "-")
 			if len(parts) >= 3 {
-				pod :+ types.Pod{
+				pod := types.Pod{
 					Namespace: parts[1],
-					Name: strings.Join(parts[2:], "-"),
+					Name:      strings.Join(parts[2:], "-"),
 				}
 				pm.runtime.StopContainer(pod)
 			}
 		}
 	}
-	
+
+	return nil
+}
+
+func (pm *PodManager) getPodsFromAPI() ([]types.Pod, error) {
+	url := fmt.Sprintf("%s/api/v1/pods", pm.apiURL)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var podList types.PodList
+	if err := json.NewDecoder(resp.Body).Decode(&podList); err != nil {
+		return nil, err
+	}
+
+	return podList.Items, nil
+}
+
+func (pm *PodManager) updatePodStatus(pod types.Pod, status string) error {
+	fmt.Printf("Pod %s/%s status: %s -> %s\n", pod.Namespace, pod.Name, pod.Status, status)
 	return nil
 }
