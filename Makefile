@@ -6,10 +6,9 @@ build:
 	@echo "building m8s components..."
 	@mkdir -p bin
 	@go build -o bin/apiserver ./cmd/apiserver
-	@go build -o bin/scheduler ./cmd/scheduler
 	@go build -o bin/kubelet ./cmd/kubelet
 	@go build -o bin/m8s ./cmd/m8s
-	@echo "build complete! binarier in ./bin/"
+	@echo "build complete! binaries in ./bin/"
 
 test:
 	@echo "running tests..."

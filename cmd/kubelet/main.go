@@ -28,8 +28,8 @@ func main() {
 	ticker := time.NewTicker(time.Duration(*syncInterval) * time.Second)
 	defer ticker.Stop()
 
-	fmt.Println("\n Kubelet started! Watching for pods...")
-	fmt.Println("Press ctrl+c to stop\n")
+	fmt.Println(" Kubelet started! Watching for pods...")
+	fmt.Println(" Press ctrl+c to stop")
 
 	if err := pm.Sync(); err != nil {
 		log.Printf("Sync error: %v:", err)
